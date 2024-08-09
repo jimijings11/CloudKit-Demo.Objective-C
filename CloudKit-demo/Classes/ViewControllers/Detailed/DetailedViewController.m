@@ -8,6 +8,8 @@
 
 #import "DetailedViewController.h"
 #import "CloudKitManager.h"
+#import <CloudKit/CloudKit.h>
+
 
 static NSString * const kUnwindId = @"unwindToMainId";
 
@@ -72,6 +74,48 @@ static NSString * const kUnwindId = @"unwindToMainId";
         }
     }];
 }
+- (IBAction)shareButtonDidPRess:(id)sender {
+    [self shouldAnimateIndicator:YES];
+    __weak typeof(self) weakSelf = self;
+    UICloudSharingController * cscontroller = [[UICloudSharingController alloc] initWithPreparationHandler:^(UICloudSharingController * _Nonnull controller, void (^ _Nonnull preparationCompletionHandler)(CKShare * _Nullable, CKContainer * _Nullable, NSError * _Nullable)) {
+        [CloudKitManager shareRecordWithId:self.city.identifier  preparationCompletionHandler:^(CKShare *share, CKContainer *container, NSError *error) {
+            
+        
+             if(error) {
+                [weakSelf shouldAnimateIndicator:NO];
+                [weakSelf presentMessage:error.userInfo[NSLocalizedDescriptionKey]];
+            } else {
+               
+    //            CKModifyRecordsOperation * op = [[CKModifyRecordsOperation alloc] setRecordsToSave:@[share,results[0]]];
+                
+//                [controller setAvailablePermissions:UICloudSharingPermissionAllowReadWrite];
+//                [controller setAvailablePermissions:UICloudSharingPermissionAllowPrivate];
+//                [controller setModalPresentationStyle:UIModalPresentationFormSheet];
+//                controller.delegate = weakSelf;
+                
+                
+                [weakSelf shouldAnimateIndicator:NO];
+                
+
+               
+                
+            }
+        }];
+       
+    }];
+    if (cscontroller) {
+        [cscontroller setAvailablePermissions:UICloudSharingPermissionAllowReadWrite];
+                        [cscontroller setAvailablePermissions:UICloudSharingPermissionAllowPrivate];
+                        [cscontroller setModalPresentationStyle:UIModalPresentationFormSheet];
+        cscontroller.delegate = weakSelf;
+        [self presentViewController:cscontroller animated:true completion:^{
+    //                [weakSelf presentMessage:NSLocalizedString(@"Successfully shared it", nil)];
+        }];
+    }
+   
+    
+    
+}
 
 #pragma mark - Private
 
@@ -101,6 +145,42 @@ static NSString * const kUnwindId = @"unwindToMainId";
     CGRect keyboardFrame = [self.view convertRect:rawFrame fromView:nil];
     
     self.scrollView.contentOffset = CGPointMake(0, keyboardFrame.size.height);
+}
+
+- (void)cloudSharingController:(nonnull UICloudSharingController *)csc failedToSaveShareWithError:(nonnull NSError *)error {
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Error"
+                               message:error.description
+                               preferredStyle:UIAlertControllerStyleAlert];
+
+    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+                                   handler:^(UIAlertAction * action) {}];
+
+    [alert addAction:defaultAction];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (nullable NSString *)itemTitleForCloudSharingController:(nonnull UICloudSharingController *)csc {
+    return  @"Customowy tytuł pod obrazkiem";
+}
+
+- (void)encodeWithCoder:(nonnull NSCoder *)coder {
+    
+}
+
+- (void)didUpdateFocusInContext:(nonnull UIFocusUpdateContext *)context withAnimationCoordinator:(nonnull UIFocusAnimationCoordinator *)coordinator {
+    
+}
+
+- (void)setNeedsFocusUpdate {
+    
+}
+
+- (BOOL)shouldUpdateFocusInContext:(nonnull UIFocusUpdateContext *)context {
+    return  true;
+}
+
+- (void)updateFocusIfNeeded {
+        
 }
 
 @end

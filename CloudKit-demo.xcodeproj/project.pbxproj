@@ -318,7 +318,7 @@
 				TargetAttributes = {
 					AA396AF61AB02DFE00A8757F = {
 						CreatedOnToolsVersion = 6.2;
-						DevelopmentTeam = R7JGNRV2SS;
+						DevelopmentTeam = 747DW6A3WF;
 						SystemCapabilities = {
 							com.apple.iCloud = {
 								enabled = 1;
@@ -336,6 +336,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -496,9 +497,11 @@
 				CODE_SIGN_ENTITLEMENTS = "CloudKit-demo/CloudKit-demo.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 747DW6A3WF;
 				INFOPLIST_FILE = "CloudKit-demo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jbmobile.cloudkit-objC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -512,9 +515,11 @@
 				CODE_SIGN_ENTITLEMENTS = "CloudKit-demo/CloudKit-demo.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 747DW6A3WF;
 				INFOPLIST_FILE = "CloudKit-demo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jbmobile.cloudkit-objC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};

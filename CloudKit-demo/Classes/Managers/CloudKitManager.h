@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CloudKit/CloudKit.h>
 
 typedef void(^CloudKitCompletionHandler)(NSArray *results, NSError *error);
 
@@ -23,5 +24,10 @@ typedef void(^CloudKitCompletionHandler)(NSArray *results, NSError *error);
 
 + (void)removeRecordWithId:(NSString *)recordId
          completionHandler:(CloudKitCompletionHandler)handler;
+
+//+ (void)shareRecordWithId:(NSString *)recordId completionHandler:(CloudKitCompletionHandler)handler;
++ (void)shareRecordWithId:(NSString *)recordId completionHandler:(CloudKitCompletionHandler)handler preparationCompletionHandler:( void (^)(CKShare * share, CKContainer * container, NSError * error))prephandler;
+
++ (void)shareRecordWithId:(NSString *)recordId preparationCompletionHandler:( void (^)(CKShare * share, CKContainer * container, NSError * error))prephandler;
 
 @end

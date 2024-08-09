@@ -10,7 +10,7 @@
 #import "BaseViewController.h"
 #import "City.h"
 
-@interface DetailedViewController : BaseViewController
+@interface DetailedViewController : BaseViewController <UICloudSharingControllerDelegate>
 
 @property (nonatomic, strong) City *city;
 

@@ -7,7 +7,6 @@
 //
 
 #import "CloudKitManager.h"
-#import <CloudKit/CloudKit.h>
 #import <UIKit/UIKit.h>
 #import "City.h"
 
@@ -97,6 +96,72 @@ NSString * const kCitiesRecord = @"Cities";
         dispatch_async(dispatch_get_main_queue(), ^{
             handler (nil, error);
         });
+    }];
+}
+
++ (void)shareRecordWithId:(NSString *)recordId preparationCompletionHandler:( void (^)(CKShare * share, CKContainer * container, NSError * error))prephandler {
+    CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId];
+    [[self publicCloudDatabase] fetchRecordWithID:recordID completionHandler:^(CKRecord *record, NSError *error) {
+        
+//        if (!handler) return;
+        
+        if (error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                prephandler(nil, nil,error);
+            });
+            return;
+        }
+        
+        CKShare * share = [[CKShare alloc] initWithRootRecord:record];
+        share[CKShareTitleKey] = @"Olimpiada  w Jarzynowie";
+        [share setPublicPermission:CKShareParticipantPermissionReadWrite];
+//            share[CKShare.SystemFieldKey.title] = @"";
+        CKModifyRecordsOperation * op = [[CKModifyRecordsOperation alloc] initWithRecordsToSave:@[share, record] recordIDsToDelete:nil];
+        [op setModifyRecordsCompletionBlock:^(NSArray<CKRecord *> * _Nullable savedRecords, NSArray<CKRecordID *> * _Nullable deletedRecordIDs, NSError * _Nullable operationError) {
+            if (error == nil) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    prephandler(share, [CKContainer defaultContainer],error);
+                        });
+                
+            }
+        }];
+//        [op  setDatabase:[self publicCloudDatabase]];
+        [[self publicCloudDatabase] addOperation:op];
+//        operationQueue. 89addOperation(modifyRecordsOp);
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            handler (@[record], error);
+//        });
+    }];
+}
+
++ (void)shareRecordWithId:(NSString *)recordId completionHandler:(CloudKitCompletionHandler)handler preparationCompletionHandler:( void (^)(CKShare * share, CKContainer * container, NSError * error))prephandler {
+    
+    CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId];
+    [[self publicCloudDatabase] fetchRecordWithID:recordID completionHandler:^(CKRecord *record, NSError *error) {
+        
+        if (!handler) return;
+        
+        if (error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                handler (nil, error);
+            });
+            return;
+        }
+        
+        CKShare * share = [[CKShare alloc] initWithRootRecord:record];
+//            share[CKShare.SystemFieldKey.title] = @"";
+        CKModifyRecordsOperation * op = [[CKModifyRecordsOperation alloc] initWithRecordsToSave:@[share, record] recordIDsToDelete:nil];
+        [op setModifyRecordsCompletionBlock:^(NSArray<CKRecord *> * _Nullable savedRecords, NSArray<CKRecordID *> * _Nullable deletedRecordIDs, NSError * _Nullable operationError) {
+            if (error == nil) {
+                prephandler(share, [CKContainer defaultContainer],error);
+            }
+        }];
+//        [op  setDatabase:[self publicCloudDatabase]];
+        [[self publicCloudDatabase] addOperation:op];
+//        operationQueue.addOperation(modifyRecordsOp);
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            handler (@[record], error);
+//        });
     }];
 }
 
