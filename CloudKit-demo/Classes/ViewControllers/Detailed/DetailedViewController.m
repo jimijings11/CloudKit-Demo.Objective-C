@@ -75,6 +75,10 @@ static NSString * const kUnwindId = @"unwindToMainId";
     }];
 }
 - (IBAction)shareButtonDidPRess:(id)sender {
+//    if (true) {
+//        [self share:self.city.identifier ];
+//        return;
+//    }
     [self shouldAnimateIndicator:YES];
     __weak typeof(self) weakSelf = self;
     UICloudSharingController * cscontroller = [[UICloudSharingController alloc] initWithPreparationHandler:^(UICloudSharingController * _Nonnull controller, void (^ _Nonnull preparationCompletionHandler)(CKShare * _Nullable, CKContainer * _Nullable, NSError * _Nullable)) {
@@ -85,20 +89,7 @@ static NSString * const kUnwindId = @"unwindToMainId";
                 [weakSelf shouldAnimateIndicator:NO];
                 [weakSelf presentMessage:error.userInfo[NSLocalizedDescriptionKey]];
             } else {
-               
-    //            CKModifyRecordsOperation * op = [[CKModifyRecordsOperation alloc] setRecordsToSave:@[share,results[0]]];
-                
-//                [controller setAvailablePermissions:UICloudSharingPermissionAllowReadWrite];
-//                [controller setAvailablePermissions:UICloudSharingPermissionAllowPrivate];
-//                [controller setModalPresentationStyle:UIModalPresentationFormSheet];
-//                controller.delegate = weakSelf;
-                
-                
                 [weakSelf shouldAnimateIndicator:NO];
-                
-
-               
-                
             }
         }];
        

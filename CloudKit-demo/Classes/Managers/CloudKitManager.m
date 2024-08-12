@@ -12,75 +12,128 @@
 
 NSString * const kCitiesRecord = @"Cities";
 
+NSString * const myCustomZoneName = @"LubiePlacki";
+CKRecordZoneID * ids;
+CKRecordZone * custZone;
+
 @implementation CloudKitManager
 
-+ (CKDatabase *)publicCloudDatabase {
-    return [[CKContainer defaultContainer] publicCloudDatabase];
++ (CKDatabase *)privateCloudDatabase {
+    return [[CKContainer defaultContainer] privateCloudDatabase];
 }
+
+
++(void)createOrFetchZone:( void (^)(CKRecordZone * rzone, NSError * error))handler {
+    if (!custZone) {
+        NSOperationQueue * queue = [[NSOperationQueue alloc] init];
+        [queue setMaxConcurrentOperationCount:1];
+        CKRecordZone * zone = [[CKRecordZone alloc] initWithZoneID: [[CKRecordZoneID alloc] initWithZoneName:myCustomZoneName ownerName:CKCurrentUserDefaultName]];
+        [[self privateCloudDatabase] saveRecordZone: zone completionHandler:^(CKRecordZone * _Nullable zone, NSError * _Nullable error) {
+            CKModifyRecordZonesOperation * oper = [[CKModifyRecordZonesOperation alloc] initWithRecordZonesToSave:@[zone] recordZoneIDsToDelete:nil];
+            [oper setModifyRecordZonesCompletionBlock:^(NSArray<CKRecordZone *> * _Nullable savedRecordZones, NSArray<CKRecordZoneID *> * _Nullable deletedRecordZoneIDs, NSError * _Nullable operationError) {
+                if(!operationError) {
+                    custZone = savedRecordZones[0];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        handler (zone, error);
+                    });
+                }
+                else {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        handler (nil, operationError);
+                    });
+                }
+                
+            }];
+            [oper  setDatabase:[self privateCloudDatabase]];
+            [queue addOperation:oper];
+            if (!handler) return;
+            
+            
+        }];
+        
+        return;
+    } else {
+        handler(custZone, nil);
+    }
+}
+
 
 // Retrieve existing records
 + (void)fetchAllCitiesWithCompletionHandler:(CloudKitCompletionHandler)handler {
-    
-    NSPredicate *predicate = [NSPredicate predicateWithValue:YES];
-    CKQuery *query = [[CKQuery alloc] initWithRecordType:kCitiesRecord predicate:predicate];
-    
-    [[self publicCloudDatabase] performQuery:query
-                                inZoneWithID:nil
-                           completionHandler:^(NSArray *results, NSError *error) {
+    [self createOrFetchZone:^(CKRecordZone *rzone, NSError *error) {
+        if (error) {
+            return;
+        }
+        NSPredicate *predicate = [NSPredicate predicateWithValue:YES];
+        CKQuery *query = [[CKQuery alloc] initWithRecordType:kCitiesRecord predicate:predicate];
         
-                               if (!handler) return;
-                               
-                               dispatch_async(dispatch_get_main_queue(), ^{
-                                   handler ([self mapCities:results], error);
-                               });
+        [[self privateCloudDatabase] performQuery:query
+                                    inZoneWithID:rzone.zoneID
+                               completionHandler:^(NSArray *results, NSError *error) {
+            
+            if (!handler) return;
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                handler ([self mapCities:results], error);
+            });
+        }];
     }];
+    
 }
 
 // add a new record
 + (void)createRecord:(NSDictionary *)recordDic completionHandler:(CloudKitCompletionHandler)handler {
     
-    CKRecord *record = [[CKRecord alloc] initWithRecordType:kCitiesRecord];
-
-    [[recordDic allKeys] enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop) {
+    [self createOrFetchZone:^(CKRecordZone *rzone, NSError *error) {
+        CKRecord *record = [[CKRecord alloc] initWithRecordType:kCitiesRecord zoneID:custZone.zoneID];
         
-        if ([key isEqualToString:CloudKitCityFields.picture]) {
-            NSString *path = [[NSBundle mainBundle] pathForResource:recordDic[key] ofType:@"png"];
-            NSData *data = [NSData dataWithContentsOfFile:path];
-            record[key] = data;
-        } else {
-            record[key] = recordDic[key];
-        }
+        [[recordDic allKeys] enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop) {
+            
+            if ([key isEqualToString:CloudKitCityFields.picture]) {
+                NSString *path = [[NSBundle mainBundle] pathForResource:recordDic[key] ofType:@"png"];
+                NSData *data = [NSData dataWithContentsOfFile:path];
+                record[key] = data;
+            } else {
+                record[key] = recordDic[key];
+            }
+        }];
+        
+        [[self privateCloudDatabase] saveRecord:record completionHandler:^(CKRecord *record, NSError *error) {
+            
+            if (!handler) return;
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                handler (@[record], error);
+            });
+        }];
+        
     }];
     
-    [[self publicCloudDatabase] saveRecord:record completionHandler:^(CKRecord *record, NSError *error) {
-        
-        if (!handler) return;
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            handler (@[record], error);
-        });
-    }];
+    
 }
 
 // updating the record by recordId
 + (void)updateRecordTextWithId:(NSString *)recordId text:(NSString *)text completionHandler:(CloudKitCompletionHandler)handler {
-    CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId];
-    [[self publicCloudDatabase] fetchRecordWithID:recordID completionHandler:^(CKRecord *record, NSError *error) {
-        
-        if (!handler) return;
-        
-        if (error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                handler (nil, error);
-            });
-            return;
-        }
-        
-        record[CloudKitCityFields.text] = text;
-        [[self publicCloudDatabase] saveRecord:record completionHandler:^(CKRecord *record, NSError *error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                handler (@[record], error);
-            });
+    [self createOrFetchZone:^(CKRecordZone *rzone, NSError *error) {
+        CKRecord *record = [[CKRecord alloc] initWithRecordType:kCitiesRecord zoneID:custZone.zoneID];
+        CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId zoneID:rzone.zoneID];
+        [[self privateCloudDatabase] fetchRecordWithID:recordID completionHandler:^(CKRecord *record, NSError *error) {
+            
+            if (!handler) return;
+            
+            if (error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    handler (nil, error);
+                });
+                return;
+            }
+            
+            record[CloudKitCityFields.text] = text;
+            [[self privateCloudDatabase] saveRecord:record completionHandler:^(CKRecord *record, NSError *error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    handler (@[record], error);
+                });
+            }];
         }];
     }];
 }
@@ -89,7 +142,7 @@ NSString * const kCitiesRecord = @"Cities";
 + (void)removeRecordWithId:(NSString *)recordId completionHandler:(CloudKitCompletionHandler)handler {
     
     CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId];
-    [[self publicCloudDatabase] deleteRecordWithID:recordID completionHandler:^(CKRecordID *recordID, NSError *error) {
+    [[self privateCloudDatabase] deleteRecordWithID:recordID completionHandler:^(CKRecordID *recordID, NSError *error) {
         
         if (!handler) return;
         
@@ -100,8 +153,12 @@ NSString * const kCitiesRecord = @"Cities";
 }
 
 + (void)shareRecordWithId:(NSString *)recordId preparationCompletionHandler:( void (^)(CKShare * share, CKContainer * container, NSError * error))prephandler {
-    CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId];
-    [[self publicCloudDatabase] fetchRecordWithID:recordID completionHandler:^(CKRecord *record, NSError *error) {
+    NSOperationQueue * quwuw = [[NSOperationQueue alloc] init];
+    [quwuw setMaxConcurrentOperationCount:1];
+    
+    [self createOrFetchZone:^(CKRecordZone *rzone, NSError *error) {
+    CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId zoneID:custZone.zoneID];
+    [[self privateCloudDatabase] fetchRecordWithID:recordID completionHandler:^(CKRecord *record, NSError *error) {
         
 //        if (!handler) return;
         
@@ -112,58 +169,50 @@ NSString * const kCitiesRecord = @"Cities";
             return;
         }
         
-        CKShare * share = [[CKShare alloc] initWithRootRecord:record];
-        share[CKShareTitleKey] = @"Olimpiada  w Jarzynowie";
-        [share setPublicPermission:CKShareParticipantPermissionReadWrite];
-//            share[CKShare.SystemFieldKey.title] = @"";
-        CKModifyRecordsOperation * op = [[CKModifyRecordsOperation alloc] initWithRecordsToSave:@[share, record] recordIDsToDelete:nil];
-        [op setModifyRecordsCompletionBlock:^(NSArray<CKRecord *> * _Nullable savedRecords, NSArray<CKRecordID *> * _Nullable deletedRecordIDs, NSError * _Nullable operationError) {
-            if (error == nil) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    prephandler(share, [CKContainer defaultContainer],error);
-                        });
-                
-            }
-        }];
-//        [op  setDatabase:[self publicCloudDatabase]];
-        [[self publicCloudDatabase] addOperation:op];
-//        operationQueue. 89addOperation(modifyRecordsOp);
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            handler (@[record], error);
-//        });
-    }];
-}
-
-+ (void)shareRecordWithId:(NSString *)recordId completionHandler:(CloudKitCompletionHandler)handler preparationCompletionHandler:( void (^)(CKShare * share, CKContainer * container, NSError * error))prephandler {
-    
-    CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId];
-    [[self publicCloudDatabase] fetchRecordWithID:recordID completionHandler:^(CKRecord *record, NSError *error) {
+//        CKShare * share = [[CKShare alloc] initWithRootRecord:record];
+//        if (@available(iOS 15.0, *)) {
+//            CKRecordZoneID * zoneID = [[CKRecordZoneID alloc] initWithZoneName:myCustomZoneName ownerName:CKCurrentUserDefaultName];
+//            CKRecord * re = [[CKRecord alloc] initWithRecordType:CKRecordTypeShare zoneID:zoneID];
+//            re[CloudKitCityFields.text] = text;
+//            CKShare * share = [[CKShare alloc] initWithRecordZoneID:zoneID];
+//            CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:[[NSUUID UUID] UUIDString] zoneID:rzone.zoneID];
+//            CKShare * share = [[CKShare alloc] initWithRootRecord:record shareID:recordID];
+//        CKShare *share = [[CKShare alloc] initWithRootRecord:record];
+        CKShare * share = [[CKShare alloc] initWithRecordZoneID:rzone.zoneID];
+//            record initWithRecordType:<#(nonnull CKRecordType)#> zoneID:<#(nonnull CKRecordZoneID *)#>
+            
+            share[CKShareTitleKey] = @"Olimpiada  w Jarzynowie";
+            [share setPublicPermission:CKShareParticipantPermissionReadWrite];
+            CKModifyRecordsOperation * op = [[CKModifyRecordsOperation alloc] initWithRecordsToSave:@[share, record] recordIDsToDelete:nil];
+            [op setModifyRecordsCompletionBlock:^(NSArray<CKRecord *> * _Nullable savedRecords, NSArray<CKRecordID *> * _Nullable deletedRecordIDs, NSError * _Nullable operationError) {
+                if (operationError == nil) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        prephandler(share, [CKContainer defaultContainer],operationError);
+                    });
+                    
+                }
+                else {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        prephandler(share, [CKContainer defaultContainer],operationError);
+                    });
+                }
+            }];
+            [op  setDatabase:[self privateCloudDatabase]];
+            [quwuw addOperation:op];
+//        } else {
+//            // Fallback on earlier versions
+//        }
         
-        if (!handler) return;
-        
-        if (error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                handler (nil, error);
-            });
-            return;
-        }
-        
-        CKShare * share = [[CKShare alloc] initWithRootRecord:record];
-//            share[CKShare.SystemFieldKey.title] = @"";
-        CKModifyRecordsOperation * op = [[CKModifyRecordsOperation alloc] initWithRecordsToSave:@[share, record] recordIDsToDelete:nil];
-        [op setModifyRecordsCompletionBlock:^(NSArray<CKRecord *> * _Nullable savedRecords, NSArray<CKRecordID *> * _Nullable deletedRecordIDs, NSError * _Nullable operationError) {
-            if (error == nil) {
-                prephandler(share, [CKContainer defaultContainer],error);
-            }
-        }];
-//        [op  setDatabase:[self publicCloudDatabase]];
-        [[self publicCloudDatabase] addOperation:op];
+//        [[self privateCloudDatabase] addOperation:op];
 //        operationQueue.addOperation(modifyRecordsOp);
 //        dispatch_async(dispatch_get_main_queue(), ^{
 //            handler (@[record], error);
 //        });
     }];
+    }];
 }
+
+
 
 + (NSArray *)mapCities:(NSArray *)cities {
     if (cities.count == 0) return nil;
