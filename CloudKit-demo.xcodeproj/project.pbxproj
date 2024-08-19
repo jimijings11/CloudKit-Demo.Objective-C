@@ -27,6 +27,7 @@
 		AACCE78A1AB72D8800B27DEC /* City.m in Sources */ = {isa = PBXBuildFile; fileRef = AACCE7891AB72D8800B27DEC /* City.m */; };
 		AACCE78F1AB752B400B27DEC /* CityTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = AACCE78D1AB752B400B27DEC /* CityTableViewCell.m */; };
 		AACCE7901AB752B400B27DEC /* CityTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = AACCE78E1AB752B400B27DEC /* CityTableViewCell.xib */; };
+		FCF6BB8F2C732DA500465C11 /* ParentViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = FCF6BB8E2C732DA500465C11 /* ParentViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,8 @@
 		AACCE78C1AB752B400B27DEC /* CityTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CityTableViewCell.h; sourceTree = "<group>"; };
 		AACCE78D1AB752B400B27DEC /* CityTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CityTableViewCell.m; sourceTree = "<group>"; };
 		AACCE78E1AB752B400B27DEC /* CityTableViewCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CityTableViewCell.xib; sourceTree = "<group>"; };
+		FCF6BB8D2C732DA500465C11 /* ParentViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ParentViewController.h; sourceTree = "<group>"; };
+		FCF6BB8E2C732DA500465C11 /* ParentViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ParentViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -242,6 +245,7 @@
 		AACCE7801AB72A2D00B27DEC /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				FCF6BB8C2C732D7F00465C11 /* Parent */,
 				AA708B101AC03094006426EF /* Base */,
 				AA18E3131AB9C8AA00366168 /* Detailed */,
 				AA18E3161AB9C8AA00366168 /* Main */,
@@ -267,6 +271,15 @@
 				AACCE78E1AB752B400B27DEC /* CityTableViewCell.xib */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		FCF6BB8C2C732D7F00465C11 /* Parent */ = {
+			isa = PBXGroup;
+			children = (
+				FCF6BB8D2C732DA500465C11 /* ParentViewController.h */,
+				FCF6BB8E2C732DA500465C11 /* ParentViewController.m */,
+			);
+			path = Parent;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -384,6 +397,7 @@
 			files = (
 				AACCE78A1AB72D8800B27DEC /* City.m in Sources */,
 				AA708B131AC030A6006426EF /* BaseViewController.m in Sources */,
+				FCF6BB8F2C732DA500465C11 /* ParentViewController.m in Sources */,
 				AACCE77D1AB70FF600B27DEC /* AppDelegate.m in Sources */,
 				AACCE78F1AB752B400B27DEC /* CityTableViewCell.m in Sources */,
 				AACCE7861AB72A4F00B27DEC /* CloudKitManager.m in Sources */,

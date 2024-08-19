@@ -11,6 +11,7 @@
 #import "City.h"
 
 NSString * const kCitiesRecord = @"Cities";
+NSString * const kParentsRecord = @"Parents";
 
 NSString * const myCustomZoneName = @"LubiePlacki";
 CKRecordZoneID * ids;
@@ -80,6 +81,29 @@ CKRecordZone * custZone;
     }];
     
 }
+
++ (void)fetchAllPArentsWithCompletionHandler:(CloudKitCompletionHandler)handler {
+    [self createOrFetchZone:^(CKRecordZone *rzone, NSError *error) {
+        if (error) {
+            return;
+        }
+        NSPredicate *predicate = [NSPredicate predicateWithValue:YES];
+        CKQuery *query = [[CKQuery alloc] initWithRecordType:kParentsRecord predicate:predicate];
+        
+        [[self privateCloudDatabase] performQuery:query
+                                    inZoneWithID:rzone.zoneID
+                               completionHandler:^(NSArray *results, NSError *error) {
+            
+            if (!handler) return;
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                handler ([self mapParents:results], error);
+            });
+        }];
+    }];
+    
+}
+
 
 // add a new record
 + (void)createRecord:(NSDictionary *)recordDic completionHandler:(CloudKitCompletionHandler)handler {
@@ -160,8 +184,6 @@ CKRecordZone * custZone;
     CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:recordId zoneID:custZone.zoneID];
     [[self privateCloudDatabase] fetchRecordWithID:recordID completionHandler:^(CKRecord *record, NSError *error) {
         
-//        if (!handler) return;
-        
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 prephandler(nil, nil,error);
@@ -169,20 +191,9 @@ CKRecordZone * custZone;
             return;
         }
         
-//        CKShare * share = [[CKShare alloc] initWithRootRecord:record];
-//        if (@available(iOS 15.0, *)) {
-//            CKRecordZoneID * zoneID = [[CKRecordZoneID alloc] initWithZoneName:myCustomZoneName ownerName:CKCurrentUserDefaultName];
-//            CKRecord * re = [[CKRecord alloc] initWithRecordType:CKRecordTypeShare zoneID:zoneID];
-//            re[CloudKitCityFields.text] = text;
-//            CKShare * share = [[CKShare alloc] initWithRecordZoneID:zoneID];
-//            CKRecordID *recordID = [[CKRecordID alloc] initWithRecordName:[[NSUUID UUID] UUIDString] zoneID:rzone.zoneID];
-//            CKShare * share = [[CKShare alloc] initWithRootRecord:record shareID:recordID];
-//        CKShare *share = [[CKShare alloc] initWithRootRecord:record];
-        CKShare * share = [[CKShare alloc] initWithRecordZoneID:rzone.zoneID];
-//            record initWithRecordType:<#(nonnull CKRecordType)#> zoneID:<#(nonnull CKRecordZoneID *)#>
+        CKShare * share = [[CKShare alloc] initWithRootRecord:record];
             
-            share[CKShareTitleKey] = @"Olimpiada  w Jarzynowie";
-            [share setPublicPermission:CKShareParticipantPermissionReadWrite];
+//            share[CKShareTitleKey] = @"example";0
             CKModifyRecordsOperation * op = [[CKModifyRecordsOperation alloc] initWithRecordsToSave:@[share, record] recordIDsToDelete:nil];
             [op setModifyRecordsCompletionBlock:^(NSArray<CKRecord *> * _Nullable savedRecords, NSArray<CKRecordID *> * _Nullable deletedRecordIDs, NSError * _Nullable operationError) {
                 if (operationError == nil) {
@@ -199,15 +210,6 @@ CKRecordZone * custZone;
             }];
             [op  setDatabase:[self privateCloudDatabase]];
             [quwuw addOperation:op];
-//        } else {
-//            // Fallback on earlier versions
-//        }
-        
-//        [[self privateCloudDatabase] addOperation:op];
-//        operationQueue.addOperation(modifyRecordsOp);
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            handler (@[record], error);
-//        });
     }];
     }];
 }
@@ -219,6 +221,18 @@ CKRecordZone * custZone;
     
     NSMutableArray *temp = [[NSMutableArray alloc] init];
     [cities enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        City *city = [[City alloc] initWithInputData:obj];
+        [temp addObject:city];
+    }];
+    
+    return [NSArray arrayWithArray:temp];
+}
+
++ (NSArray *)mapParents:(NSArray *)parents {
+    if (parents.count == 0) return nil;
+    
+    NSMutableArray *temp = [[NSMutableArray alloc] init];
+    [parents enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         City *city = [[City alloc] initWithInputData:obj];
         [temp addObject:city];
     }];
